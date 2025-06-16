@@ -30,42 +30,181 @@ enum BookingStatus{
   PENDING
   CONFIRMED
   CANCELLED
-  COMPLETED
+  ACCEPTED
 }
 
-model User{
+enum BookingPriority{
+  REGULAR
+  PRIORITIZE
+  VOID
+}
+
+enum PaymentType{
+  UPFRONT
+  FULL
+  CLOSING
+  VOID
+}
+
+enum PaymentMethod{
+  CASH
+  QRIS
+  CREDITCARD
+  DEBITCARD
+  EWALLET
+}
+
+enum PaymentStatus{
+  PENDING
+  PAID
+  FAILED
+  CANCELLED
+  REFUNDED
+  VOID
+}
+
+model Users{
   id String @id @default(uuid())
-  firebase_uid String @unique
   username String
   email String @unique
-  role Role @default(CUSTOMER)
-  booking_as_customer Booking[] @relation("CustomerBooking")
-  booking_created_by Booking[] @relation("TPBooking")
+  firebase_id String
+  role Role
+  created_at DateTime @default(now())
+  updated_at DateTime @default(now())
+  product_create_by Products[] @relation("Product Create By")
+  product_update_by Products[] @relation("Product Update By")
+  place_create_by Places[] @relation("Place Create By")
+  place_update_by Places[] @relation("Place Update By")
+  staff_book Bookings[] @relation("Staff Booking ID")
+  customer_book Bookings[] @relation("Customer Booking ID")
+  booking_update_by Bookings[] @relation("Booking Update By")
+  rent_update_by Rents[]
+  payment_create_by Payments[] @relation("Payment Create By")
+  payment_update_by Payments[] @relation("Payment Update By")
 }
 
-model Category{
-  id Int @id @default(autoincrement())
-  name String
-  type Type
-  slug String
-}
-
-model Booking{
+model Categories{
   id String @id @default(uuid())
-  customer User @relation("CustomerBooking",fields: [customer_id], references: [id])
-  customer_id String
-  created_by User @relation("TPBooking", fields: [created_by_id], references: [id])
-  created_by_id String
-  booking_for Type
-  status BookingStatus @default(PENDING)
-  created_at DateTime
-  updated_at DateTime
+  name String
+  slug String
+  type Type
+  product_sport_category Products[] @relation("Product Sport Category")
+  place_sport_category Places[] @relation("Place Sport Category")
+  product_category Products[] @relation("Product Category")
+  created_at DateTime @default(now())
+  updated_at DateTime @default(now())
 }
 
-model Place{
-  id String @unique @default(uuid())
+model Products{
+  id String @id @default(uuid())
+  name String 
+  item_sub_id String
+  sport_category Categories @relation("Product Sport Category", fields: [sport_category_id], references: [id])
+  sport_category_id String
+  product_category Categories @relation("Product Category", fields: [product_category_id], references: [id])
+  product_category_id String
+  hourly_prices Float
+  is_maintainance Boolean
+  is_available Boolean
+  created_at DateTime @default(now())
+  created_by Users @relation("Product Create By", fields: [created_by_id], references: [id])
+  created_by_id String
+  updated_at DateTime @default(now())
+  updated_by Users @relation("Product Update By", fields: [updated_by_id], references: [id])
+  updated_by_id String
+  package Packages[]
+  booking Bookings[]
+}
+
+model Places{
+  id String @id @default(uuid())
+  name String 
+  location String
+  hourly_prices Float
+  sport_category Categories @relation("Place Sport Category", fields: [sport_category_id], references: [id])
+  sport_category_id String
+  operational_hours Json
+  is_maintainance Boolean
+  is_available Boolean
+  created_at DateTime @default(now())
+  created_by Users @relation("Place Create By", fields: [created_by_id], references: [id])
+  created_by_id String
+  updated_at DateTime @default(now())
+  updated_by Users @relation("Place Update By", fields: [updated_by_id], references: [id])
+  updated_by_id String
+  package Packages[]
+  booking Bookings[]
+}
+
+model Packages{
+  id String @id @default(uuid())
   name String
-  price_per_hour Int
-  is_available Boolean @default(false)
-  is_under_maintainance Boolean @default(false)
+  package_type Type
+  product_id String?
+  place_id String?
+  product Products? @relation(fields: [product_id], references: [id])
+  place Places? @relation(fields: [place_id], references: [id])
+  features Json
+  booking Bookings[]
+}
+
+model Bookings{
+  id String @id @default(uuid())
+  customer_name String
+  booking_for Type
+  product_id String?
+  place_id String?
+  product Products? @relation(fields: [product_id], references: [id])
+  place Places? @relation(fields: [place_id], references: [id])
+  staff_book Users? @relation("Staff Booking ID",fields: [staff_book_id], references: [id])
+  staff_book_id String?
+  customer_book Users? @relation("Customer Booking ID",fields: [customer_book_id], references: [id])
+  customer_book_id String?
+  booking_date DateTime
+  booking_is_hourly Boolean
+  package Packages? @relation(fields: [package_id], references: [id])
+  package_id String?
+  booking_status BookingStatus @default(PENDING)
+  booking_priority BookingPriority @default(REGULAR)
+  created_at DateTime @default(now())
+  updated_at DateTime @default(now())
+  updated_by Users @relation("Booking Update By", fields: [updated_by_id], references: [id])
+  updated_by_id String
+  rent Rents[]
+  payment Payments[]
+}
+
+model Rents{
+  id String @id @default(uuid())
+  book_ref Bookings? @relation(fields: [booking_ref_id], references: [id])
+  booking_ref_id String?
+  end_time DateTime
+  payment_status PaymentType?
+  is_extended Boolean
+  total_extended Int
+  total_prices Float
+  created_at DateTime @default(now())
+  updated_at DateTime @default(now())
+  updated_by Users @relation(fields: [updated_by_id], references: [id])
+  updated_by_id String
+}
+
+model Payments{
+  id String @id @default(uuid())
+  payment_type PaymentType
+  amount Float
+  method PaymentMethod
+  status PaymentStatus
+  reference_code String
+  notes String
+  method_details Json
+  paid_at DateTime
+  booking_id String?
+  booking Bookings? @relation(fields: [booking_id], references: [id])
+  created_at DateTime @default(now())
+  created_by Users @relation("Payment Create By", fields: [created_by_id], references: [id])
+  created_by_id String
+  updated_at DateTime @default(now())
+  updated_by Users @relation("Payment Update By", fields: [updated_by_id], references: [id])
+  updated_by_id String
 }

@@ -6,7 +6,6 @@
 
 generator client {
   provider = "prisma-client-js"
-  output   = "../generated/prisma"
 }
 
 datasource db {
@@ -67,7 +66,7 @@ model Users{
   id String @id @default(uuid())
   username String
   email String @unique
-  firebase_id String
+  firebase_id String @unique
   role Role
   created_at DateTime @default(now())
   updated_at DateTime @default(now())

@@ -11,3 +11,8 @@ export class UserDTO {
   @IsEnum(Role)
   role: Role;
 }
+
+export class LoginDTO {
+  @IsString()
+  token: string;
+}

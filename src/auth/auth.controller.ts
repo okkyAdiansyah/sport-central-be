@@ -2,13 +2,12 @@ import {
   BadRequestException,
   Body,
   Controller,
-  Headers,
   NotFoundException,
   Post,
 } from '@nestjs/common';
 import { CreateUserDTO } from './dto/create-user.dto';
 import { AuthService } from './auth.service';
-import { UserDTO } from './dto/user.dto';
+import { LoginDTO, UserDTO } from './dto/user.dto';
 import { FirebaseService } from 'src/firebase/firebase.service';
 
 @Controller('auth')
@@ -23,24 +22,21 @@ export class AuthController {
     if (!newUser) {
       throw new BadRequestException('Missing correct request body');
     }
-
-    try {
-      const user = await this.authService.registerNewUser(newUser);
-      return {
-        username: user.username,
-        email: user.email,
-        role: user.role,
-      };
-    } catch {
-      throw new BadRequestException('Failed to register new user');
-    }
+    const user = await this.authService.registerNewUser(newUser);
+    return {
+      username: user.username,
+      email: user.email,
+      role: user.role,
+    };
   }
 
   @Post('login')
-  async login(
-    @Headers('authorization') authorization: string,
-  ): Promise<UserDTO> {
-    const user = await this.authService.userLogin(authorization);
+  async login(@Body() loginDTO: LoginDTO): Promise<UserDTO> {
+    if (!loginDTO) {
+      throw new BadRequestException('Missing login token');
+    }
+
+    const user = await this.authService.userLogin(loginDTO.token);
     if (!user) {
       throw new NotFoundException('No User Found');
     }

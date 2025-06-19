@@ -13,8 +13,14 @@ export class FirebaseService {
     try {
       const decodedToken = await this.admin.auth().verifyIdToken(tokenId);
       return decodedToken;
-    } catch {
-      throw new UnauthorizedException('Invalid Token');
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : 'Unknown error message';
+      throw new UnauthorizedException({
+        source: 'FirebaseService',
+        message: 'Invalid Token',
+        details: message,
+      });
     }
   }
 }
